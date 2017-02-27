@@ -11,18 +11,12 @@ import javafx.animation.Animation;
 import javafx.animation.ScaleTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Application;
-import javafx.event.Event;
-import javafx.event.EventHandler;
-import javafx.event.EventType;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.input.MouseDragEvent;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -42,10 +36,11 @@ public class Circles extends Application {
         root = new VBox();
         canvas = new Pane();
         starter = new Button("Circles");
+        addButtonHandler();
         
-        starter.addEventHandler( MouseEvent.MOUSE_CLICKED, event -> {
-            addButtonHandler();
-         });
+//        starter.addEventHandler( MouseEvent.MOUSE_CLICKED, event -> {
+//            addButtonHandler();
+//         });
         
         root.setAlignment(Pos.CENTER);
         canvas.setPrefSize(COLS * CELL_SIZE, ROWS * CELL_SIZE);
@@ -55,6 +50,10 @@ public class Circles extends Application {
         primaryStage.setTitle("Java 8 Lab Exercise");
         primaryStage.setScene(new Scene(root));
         primaryStage.show();
+        
+        makeRow().forEach(x->System.out.println(x));
+        makeAllRows().forEach(r->r.forEach(x->System.out.println(x)));
+        
     }
     
     /**
@@ -62,11 +61,14 @@ public class Circles extends Application {
      * this application its behavior.
      */
     private void addButtonHandler() {
-        starter.setOnAction(e -> addToCanvas(new Circle(CELL_SIZE/2, Color.BLACK)));
-        Circle circle = new Circle(30 , Color.BLACK );
-        circle.setCenterX(50.0f);
-        circle.setCenterY(50.0f);
-        addToCanvas( circle );
+//        starter.setOnAction(e -> addToCanvas(new Circle(CELL_SIZE/4, Color.BLACK)));
+        starter.setOnAction(e -> { canvas.getChildren().clear(); 
+                                   addAllRowsToCanvas( makeAllRows() ); } );
+        
+//        Circle circle = new Circle(30 , Color.BLACK );
+//        circle.setCenterX(50.0f);
+//        circle.setCenterY(50.0f);
+//        addToCanvas( circle );
     }
     
     private VBox root;
@@ -78,41 +80,54 @@ public class Circles extends Application {
     
     
     private void addToCanvas( Circle circle ) {
-        circle.setFill(new Color(1,0.4*Math.random()+0.1,0.9*Math.random()+0.1,1.0));
-        //double fromX = cellSizeSlider.getValue() / 2 + cellSizeSlider.getValue() * ((Integer)colControlSpinner.getValue()-1);
-        //double fromY;
+        circle.setFill(new Color(Math.random(), Math.random(), Math.random(),1.0));
+        double fromX = ( COLS * CELL_SIZE ) - ( CELL_SIZE/4 );
+        double fromY = ( ROWS * CELL_SIZE ) - ( CELL_SIZE/4 );
         double toX = (CELL_SIZE/2)+(col*CELL_SIZE);
         double toY = (CELL_SIZE/2)+(row*CELL_SIZE);
                 
-        circle.setCenterX(toX);
-        circle.setCenterY(toY);
+        circle.setCenterX(fromX);
+        circle.setCenterY(fromY);
         canvas.getChildren().add( circle );
         
         TranslateTransition tt = new TranslateTransition(Duration.millis(500));
         tt.setNode(circle);
-        //tt.setByX(cellSizeSlider.getValue()/2-toX);
-        //tt.setByY(cellSizeSlider.getValue()/2-toY);
+        tt.setByX(CELL_SIZE/4-toX);
+        tt.setByY(CELL_SIZE/4-toY);
         tt.play();
         
         ScaleTransition st = new ScaleTransition(Duration.millis(500+Math.random()*100));
         st.setNode(circle);
-        //st.setByX((Integer)xScalingFactorSpinner.getValue());
-        //st.setByY((Integer)yScalingFactorSpinner.getValue());
+        st.setByX( 2 );
+        st.setByY( 2 );
         st.setCycleCount(Animation.INDEFINITE);
         st.setAutoReverse(true);
         st.play();
     }
     
-    /*private Stream<Circle> makeRow() {
-        Stream<Circle> r = Stream.generate(()-> new Circle(cellSizeSlider.getValue()/4)).limit((Integer)colControlSpinner.getValue());
+    private Stream<Circle> makeRow() {
+        Stream<Circle> r = Stream.generate(()-> new Circle(CELL_SIZE/4, Color.BLACK)).limit( COLS );
         return r;
-    }*/
+    }
     
     private void addRowToCanvas(Stream<Circle> c1) {
         col = 0;
-        //c1.forEach(c->{addToCanvas(c); col++});
+        c1.forEach( c ->{ 
+            addToCanvas( c ); col++;
+        } );
+    }
         
+    private Stream<Stream<Circle>> makeAllRows() {
+        Stream<Stream<Circle>> result = Stream.generate(()-> makeRow()).limit( ROWS );
         
+        return result;
+    }
+    
+    private void addAllRowsToCanvas(Stream<Stream<Circle>> c2) {
+        row = 0;
+        c2.forEach (r-> {
+            addRowToCanvas(r); row++;
+        } );
     }
     
     /**
